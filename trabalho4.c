@@ -34,13 +34,9 @@ int hash(char* chave) {
 // Função para inserir um registro
 void inserirRegistro(REGISTRO novoRegistro) {
     char chave[256];
-    sprintf(chave, "%.3s#%.3s#%.50s#%.50s#%.2f#%.2f#\n", 
+    sprintf(chave, "%.3s#%.3s\n", 
             novoRegistro.id_aluno,
-            novoRegistro.sigla_disc,
-            novoRegistro.nome_aluno,
-            novoRegistro.nome_disc,
-            novoRegistro.media,
-            novoRegistro.freq);
+            novoRegistro.sigla_disc);
 
     int endereco = hash(chave);
     int tentativas = 0;
@@ -57,13 +53,13 @@ void inserirRegistro(REGISTRO novoRegistro) {
             FILE *fd = fopen("dados.bin", "ab");
             if (fd) {
                 char registro[TAM_REGISTRO];
-                sprintf(registro, "%s#%s#%s#%s#%.2f#%.2f\n", 
-                        novoRegistro.id_aluno,
-                        novoRegistro.sigla_disc,
-                        novoRegistro.nome_aluno,
-                        novoRegistro.nome_disc,
-                        novoRegistro.media,
-                        novoRegistro.freq);
+                sprintf(registro, "%.3s#%.3s#%.50s#%.50s#%.2f#%.2f#\n", 
+                    novoRegistro.id_aluno,
+                    novoRegistro.sigla_disc,
+                    novoRegistro.nome_aluno,
+                    novoRegistro.nome_disc,
+                    novoRegistro.media,
+                    novoRegistro.freq);
                 fwrite(registro, sizeof(char), strlen(registro), fd);
                 fclose(fd);
             }
