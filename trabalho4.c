@@ -29,9 +29,9 @@ INDICE_PRIMARIO hashTable[TAMANHO_TABELA][TAMANHO_BUCKET];
 
 int hash(const char *chavePrimaria) {
     int soma = 0;
-    int primo = 31;
+    int NumPrimo = 31;
     for (int i = 0; i < strlen(chavePrimaria); i++) {
-        soma = (soma * primo + chavePrimaria[i]) % TAMANHO_TABELA;
+        soma = (soma * NumPrimo + chavePrimaria[i]) % TAMANHO_TABELA;
     }
     return soma;
 }
@@ -70,9 +70,9 @@ int buscarRegistroEmArquivo(const char *chavePrimaria, REGISTRO *registro) {
     return 0;
 }
 
-int verificarDuplicacao(const char *chavePrimaria) {
+int verificaDuplicacao(const char *chavePrimaria) {
     int endereco = hash(chavePrimaria);
-    for (int tentativa = 0; tentativa < TAMANHO_TABELA; tentativa++) {
+    for (int NumTentativa = 0; NumTentativa < TAMANHO_TABELA; NumTentativa++) {
         for (int j = 0; j < TAMANHO_BUCKET; j++) {
             if (hashTable[endereco][j].flag && strcmp(hashTable[endereco][j].chavePrimaria, chavePrimaria) == 0) {
                 return 1;
@@ -83,8 +83,24 @@ int verificarDuplicacao(const char *chavePrimaria) {
     return 0;
 }
 
+void salvarHashEmArquivo() {
+    FILE *fp = verificaArquivo("hash.bin", "wb");
+    fwrite(hashTable, sizeof(hashTable), 1, fp);
+    fclose(fp);
+}
+
+void carregarHashDeArquivo() {
+    FILE *fp = fopen("hash.bin", "rb");
+    if (fp) {
+        fread(hashTable, sizeof(hashTable), 1, fp);
+        fclose(fp);
+    } else {
+        iniciaHash();  // Inicia a hash em memória caso o arquivo não exista
+    }
+}
+
 void inserirRegistro(const char *chavePrimaria) {
-    if (verificarDuplicacao(chavePrimaria)) {
+    if (verificaDuplicacao(chavePrimaria)) {
         printf("Erro! Chave duplicada!\n");
         return;
     }
@@ -92,7 +108,7 @@ void inserirRegistro(const char *chavePrimaria) {
     REGISTRO registro;
 
     if (!buscarRegistroEmArquivo(chavePrimaria, &registro)) {
-        printf("Erro! Registro não encontrado insere.bin.\n");
+        printf("Erro! Registro não encontrado em insere.bin.\n");
         return;
     }
 
@@ -115,6 +131,8 @@ void inserirRegistro(const char *chavePrimaria) {
                 printf("Endereço inicial calculado: %d\n", endereco);
                 if (tentativa > 1) printf("Colisão - Tentativa %d\n", tentativa);
                 printf("Chave %s inserida com sucesso na posição %d\n", chavePrimaria, endereco);
+
+                salvarHashEmArquivo();  // Atualiza o arquivo hash.bin
                 fclose(fp);
                 return;
             }
@@ -127,12 +145,29 @@ void inserirRegistro(const char *chavePrimaria) {
     fclose(fp);
 }
 
+void removerRegistro(const char *chavePrimaria) {
+    int endereco = hash(chavePrimaria);
+
+    for (int tentativa = 0; tentativa < TAMANHO_TABELA; tentativa++) {
+        for (int j = 0; j < TAMANHO_BUCKET; j++) {
+            if (hashTable[endereco][j].flag && strcmp(hashTable[endereco][j].chavePrimaria, chavePrimaria) == 0) {
+                hashTable[endereco][j].flag = 0;
+                printf("Chave %s removida com sucesso!\n", chavePrimaria);
+                salvarHashEmArquivo();
+                return;
+            }
+        }
+        endereco = (endereco + 1) % TAMANHO_TABELA;
+    }
+    printf("Chave %s não encontrada para remoção\n", chavePrimaria);
+}
+
 int buscarRegistro(const char *chavePrimaria, REGISTRO *registro) {
     int endereco = hash(chavePrimaria);
     FILE *fp = verificaArquivo("resultado.bin", "rb");
     int acessos = 0;
 
-    for (int tentativa = 0; tentativa < TAMANHO_TABELA; tentativa++) {
+    for (int NumTentativa = 0; NumTentativa < TAMANHO_TABELA; NumTentativa++) {
         for (int j = 0; j < TAMANHO_BUCKET; j++) {
             acessos++;
             if (hashTable[endereco][j].flag && strcmp(hashTable[endereco][j].chavePrimaria, chavePrimaria) == 0) {
@@ -148,22 +183,6 @@ int buscarRegistro(const char *chavePrimaria, REGISTRO *registro) {
     printf("Chave %s não encontrada\n", chavePrimaria);
     fclose(fp);
     return 0;
-}
-
-void removerRegistro(const char *chavePrimaria) {
-    int endereco = hash(chavePrimaria);
-
-    for (int tentativa = 0; tentativa < TAMANHO_TABELA; tentativa++) {
-        for (int j = 0; j < TAMANHO_BUCKET; j++) {
-            if (hashTable[endereco][j].flag && strcmp(hashTable[endereco][j].chavePrimaria, chavePrimaria) == 0) {
-                hashTable[endereco][j].flag = 0;
-                printf("Chave %s removida com sucesso!\n", chavePrimaria);
-                return;
-            }
-        }
-        endereco = (endereco + 1) % TAMANHO_TABELA;
-    }
-    printf("Chave %s não encontrada para remoção\n", chavePrimaria);
 }
 
 void printarTabela(){
@@ -189,7 +208,7 @@ void printarTabela(){
 
 
 int main() {
-    iniciaHash();
+    carregarHashDeArquivo();
     int opcao, i;
     REGISTRO registro;
 
