@@ -27,13 +27,8 @@ typedef struct {
 
 INDICE_PRIMARIO hashTable[TAMANHO_TABELA][TAMANHO_BUCKET];
 
-int hash(const char *chavePrimaria) {
-    int soma = 0;
-    int NumPrimo = 31;
-    for (int i = 0; i < strlen(chavePrimaria); i++) {
-        soma = (soma * NumPrimo + chavePrimaria[i]) % TAMANHO_TABELA;
-    }
-    return soma;
+int hash(char* chavePrimaria) {
+    return (atoi(chavePrimaria) % TAMANHO_TABELA);
 }
 
 void iniciaHash() {
